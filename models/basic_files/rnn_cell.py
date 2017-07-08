@@ -299,25 +299,65 @@ class GRUCell_hard(RNNCell):
 
       with vs.variable_scope("Gates"):  # Reset gate and update gate.
         # We start with bias of 1.0 to not reset and not update.
-        r, u, g = array_ops.split(1, 3, _linear([inputs, state],
-                                  3 * self._num_units, True, 1.0))
-        r, u, g = sigmoid(r), sigmoid(u), sigmoid(g)
+        r, u = array_ops.split(1, 2, _linear([inputs, state],
+                                  2 * self._num_units, True, 1.0))
+        r, u = sigmoid(r), sigmoid(u)
 
       with vs.variable_scope("Candidate"):
         c = self._activation(_linear([inputs, r * state],
                                      self._num_units, True))
+
       new_h = u * state + (1 - u) * c
 
       eps = 1e-13
-      temp = math_ops.div(math_ops.reduce_sum(math_ops.mul(new_h, state),1), \
-                          math_ops.reduce_sum(math_ops.mul(state,state),1) + eps)
+      temp = math_ops.div(math_ops.reduce_sum(math_ops.mul(new_h, state), 1), \
+                          math_ops.reduce_sum(math_ops.mul(state,state), 1) + eps)
 
-      m = array_ops.transpose(g)
+      dummy = array_ops.transpose(state)
 
-      t1 = math_ops.mul(m , temp)
-      t1 = array_ops.transpose(t1) 
- 
+      t1 = math_ops.mul(dummy, temp)
+      t1 = array_ops.transpose(t1)
+
       distract_h = new_h  -  state * t1
+
+    return distract_h, distract_h
+
+
+class GRUCell_subtract(RNNCell):
+  """Gated Recurrent Unit cell (cf. http://arxiv.org/abs/1406.1078)."""
+
+  def __init__(self, num_units, input_size=None, activation=tanh):
+    if input_size is not None:
+      logging.warn("%s: The input_size parameter is deprecated.", self)
+    self._num_units = num_units
+    self._activation = activation
+
+  @property
+  def state_size(self):
+    return self._num_units
+
+  @property
+  def output_size(self):
+    return self._num_units
+
+  def __call__(self, inputs, state, scope=None):
+    """Gated recurrent unit (GRU) with nunits cells."""
+    with vs.variable_scope(scope or type(self).__name__):  # "GRUCell"
+
+      with vs.variable_scope("Gates"):  # Reset gate and update gate.
+        # We start with bias of 1.0 to not reset and not update.
+        r, u = array_ops.split(1, 2, _linear([inputs, state],
+                                  2 * self._num_units, True, 1.0))
+        r, u = sigmoid(r), sigmoid(u)
+
+      with vs.variable_scope("Candidate"):
+        c = self._activation(_linear([inputs, r * state],
+                                     self._num_units, True))
+
+      new_h = u * state + (1 - u) * c
+
+      distract_h = new_h  -  state
+
     return distract_h, distract_h
 
 

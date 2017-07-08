@@ -11,7 +11,9 @@ from vocab import *
 
 class Datatype:
 
-    def __init__(self, name, title, label, content, query, num_samples, max_length_content, max_length_title, max_length_query):
+    def __init__(self, name, title, label, content, query, num_samples, content_sequence_length, \
+    			 query_sequence_length,\
+    			 max_length_content, max_length_title, max_length_query):
         """ Defines the dataset for each category valid/train/test
 
         Args:
@@ -130,6 +132,8 @@ class PadDataset:
         labels,   _      = self.make_batch(dt.labels,  batch_size, count,   max_length_title)
         query,    _      = self.make_batch(dt.labels,  batch_size, count,   max_length_query)
 
+        content_sequence_length, _ = self.make_batch(dt.content_sequence_length, batch_size, count, 1)
+        query_sequence_length, _   = self.make_batch(dt.query_sequence_length,   batch_size, count, 1)
 
         # Weights for the loss function for the decoder
         weights = copy.deepcopy(titles)
@@ -147,7 +151,8 @@ class PadDataset:
         else:
             dt.global_count_test  = count1 % dt.number_of_samples
         
-        return contents, titles, labels, query, weights, max_length_content, max_length_title, max_length_query
+        return contents, titles, labels, query, weights, content_sequence_length, query_sequence_length,\
+        	   max_length_content, max_length_title, max_length_query
    
  
     def load_data_file(self,name, title_file, content_file, query_file):
@@ -174,6 +179,9 @@ class PadDataset:
         label_encoded   = []
         query_encoded   = []
 
+        content_sequence_length  = []
+        query_sequence_length    = []
+        
         max_title = 0
         for lines in title:
             temp = [self.vocab.encode_word_decoder(word) for word in lines.split()]
@@ -185,6 +193,7 @@ class PadDataset:
             label_encoded.append(temp[1:])
 
         max_content = 0
+
         for lines in content:
             temp = [self.vocab.encode_word_encoder(word) for word in lines.split()]
 
@@ -192,7 +201,7 @@ class PadDataset:
                 max_content = len(temp)
 
             content_encoded.append(temp)
-
+            content_sequence_length.append(len(temp))
 
         max_query = 0
         for lines in query:
@@ -202,9 +211,11 @@ class PadDataset:
                 max_query = len(temp)
 
             query_encoded.append(temp)
+            query_sequence_length.append(len(temp))
 
         return Datatype(name, title_encoded, label_encoded, content_encoded,
-                        query_encoded, len(title_encoded), max_content, max_title, max_query)
+                        query_encoded, len(title_encoded), content_sequence_length, query_sequence_length,
+                        max_content, max_title, max_query)
 
 
     def load_data(self, wd="../Data/"):
@@ -226,8 +237,8 @@ class PadDataset:
             self.datasets[i] = self.load_data_file(i, temp_t, temp_v, temp_q)
 
 
-    def __init__(self,  working_dir = "../Data/", embedding_size=100, global_count = 0, diff_vocab = False
-    			embedding_path="../Data/embeddings.bin", limit_encode = 0, limit_decode=0):
+    def __init__(self,  working_dir = "../Data/", embedding_size=100, global_count = 0, diff_vocab = False,\
+				 embedding_path="../Data/embeddings.bin", limit_encode = 0, limit_decode=0):
 		""" Create the vocabulary and load all the datasets
 
             Arguments:
@@ -239,9 +250,7 @@ class PadDataset:
 		* void
 
         """
-
-        filenames_encode = [ working_dir + "train_content", 
-        					 working_dir + "train_query" ]
+        filenames_encode = [ working_dir + "train_content", working_dir + "train_query" ]
         filenames_decode = [ working_dir + "train_summary" ]
 
 		self.global_count = 0
