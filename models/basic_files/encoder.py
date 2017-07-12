@@ -84,13 +84,13 @@ def call_rnn(config,
              embeddings,
              dtype):
 
-  if config.is_dynamic == False and config.is_bidir == False:
+  if config.config_dir["is_dynamic"] == False and config.config_dir["is_bidir"] == False:
     return call_rnn_uni_static(cell_encoder_fw, embeddings, dtype)
 
-  elif config.is_dynamic == True and config.is_bidir == False:
+  elif config.config_dir["is_dynamic"] == True and config.config_dir["is_bidir"] == False:
     return call_rnn_uni_dynamic(cell_encoder_fw, embeddings, dtype)
 
-  elif config.is_dynamic == False and config.is_bir == True:
+  elif config.config_dir["is_dynamic"] == False and config.config_dir["is_bidir"] == True:
     return call_rnn_bidir_static(cell_encoder_fw, cell_encoder_bw, embeddings, dtype)
 
   else:
@@ -177,7 +177,7 @@ def dynamic_encoder(config,
       encoder_outputs, encoder_state = call_rnn(
           cell_encoder_fw, cell_encoder_bw, embedded_inputs, sequence_length, dtype=dtype)
 
-    if config.same_cell == True:
+    if config.config_dir["same_cell"] == True:
       with variable_scope.variable_scope("Encoder_Cell", reuse=True):
         query_outputs, query_state = call_rnn(
         cell_encoder_fw, cell_encoder_bw, query_embeddings, sequence_length, dtype = dtype)
@@ -198,4 +198,4 @@ def dynamic_encoder(config,
     attention_states_query = array_ops.concat(1, top_states_query)
 
 
-    return encoder_state, query_state, attention_states_encoder, attention_states_query
+    return encoder_state,  attention_states_encoder, query_state, attention_states_query, scope

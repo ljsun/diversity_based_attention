@@ -23,7 +23,7 @@ from .basics import *
 linear = rnn_cell._linear  # pylint: disable=protected-access
 
 def dynamic_distraction_decoder(config,
-					  decoder_inputs,
+                      decoder_inputs,
                       initial_state,
                       distract_initial_state,
                       attention_states,
@@ -255,7 +255,7 @@ def dynamic_distraction_decoder(config,
       
       a = attns_state[0]
 
-      if config.is_distraction == True:
+      if config.config_dir["is_distraction"] == True:
       	distract_output, distract_state = distraction_cell(a, distract_state)
       	x = linear([inp] + [distract_output], input_size, True)
       
@@ -269,7 +269,7 @@ def dynamic_distraction_decoder(config,
       if i == 0 and initial_state_attention:
         with variable_scope.variable_scope(variable_scope.get_variable_scope(),
                                            reuse=True):
-          if (config.distract_static == True):
+          if (config.config_dir["distract_static"] == True):
           	attns_query = query_state
           else:
           	attns_query = attention_query(state)
@@ -278,7 +278,7 @@ def dynamic_distraction_decoder(config,
           attns_state = attention(list_of_queries)
 
       else:
-          if (config.distract_static == True):
+          if (config.config_dir["distract_static"] == True):
           	attns_query = query_state
           else:
           	attns_query = attention_query(state)
@@ -297,7 +297,7 @@ def dynamic_distraction_decoder(config,
   return outputs, state
 
 def dynamic_distraction_decoder_wrapper(config,
-								decoder_inputs,
+				decoder_inputs,
                                 initial_state,
                                 distract_initial_state,
                                 attention_states,
@@ -393,24 +393,24 @@ def dynamic_distraction_decoder_wrapper(config,
         initial_state_attention=initial_state_attention)
 
 
-def dynamic_distraction_decoder_start(config,
-									  encoder_state,
-									  query_state,
-									  attention_states_encoder,
-                                	  attention_states_decoder,
-    		                          cell_encoder_fw,
-	                                  distraction_cell,
-                                      num_decoder_symbols,
-                                      embedding_size,
-                                      initial_embedding = None,
-                                      num_heads=1,
-                                      embedding_trainable=False,
-                                      output_projection=None,
-                                      feed_previous=False,
-                                      embedding_scope = None,
-                                      dtype=None,
-                                      scope=None,
-                                      initial_state_attention=False):
+def distraction_decoder_start(config,
+                             decoder_inputs,
+                             attention_states_encoder,
+                             attention_states_query,
+                             cell_encoder_fw,
+                             initial_state,
+                             distraction_cell,
+                             num_decoder_symbols,
+                             embedding_size,
+                             initial_embedding = None,
+                             num_heads=1,
+                             embedding_trainable=False,
+                             output_projection=None,
+                             feed_previous=False,
+                             embedding_scope = None,
+                             dtype=None,
+                             scope=None,
+                             initial_state_attention=False):
   """Embedding sequence-to-sequence model with attention.
 
   This model first embeds encoder_inputs by a newly created embedding (of shape
@@ -473,7 +473,7 @@ def dynamic_distraction_decoder_start(config,
           output_size=output_size,
           output_projection=output_projection,
           feed_previous=feed_previous,
-          embedding_scope = scope,
+          embedding_scope = embedding_scope,
           initial_state_attention=initial_state_attention)
 
     # If feed_previous is a Tensor, we construct 2 graphs and use cond.
@@ -499,7 +499,7 @@ def dynamic_distraction_decoder_start(config,
             output_size=output_size,
             output_projection=output_projection,
             feed_previous=feed_previous_bool,
-            embedding_scope = scope,
+            embedding_scope = embedding_scope,
             update_embedding_for_previous=False,
             initial_state_attention=initial_state_attention)
 

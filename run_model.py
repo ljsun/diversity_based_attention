@@ -10,65 +10,8 @@ from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 from optparse import OptionParser
 from models.basic_files.dataset_iterator import *
+from read_config import *
 import os
-
-class Config:
-
-    """ Config class represents the hyperparameters in a single
-        object
-    """ 
-    def __init__(self,
-                 learning_rate=0.0001,
-                 embedding_size=50,
-                 hidden_size=100,
-                 batch_size = 64,
-                 max_epochs = 20,
-                 max_sequence_length_content = 100,
-                 max_sequence_length_title=50,
-                 max_sequence_length_query = 20,
-                 early_stop=100,
-                 outdir="../out/",
-                 emb_tr=False):
-
-        """ Initialize the object with the parameters.
-
-        Args:
-            learning_rate : Learning rate for the optimizer
-            embedding_size: dimensions of word embeddings
-            hidden_size   : dimensions of hidden state of rnn cell
-            batch_size    : batch size
-            max_epochs    : Number of epochs to be run
-            early_stop    : early stop
-
-            max_sequence_length_content: Max length to be set for encoder inputs
-            max_sequence_length_title  : Max length to be set for decoder inputs
-            max_sequence_length_query  : Max length to be set for query inputs
-        """
-
-        config_file = open(outdir + "/config", "w")
-
-        self.learning_rate = learning_rate
-        self.embedding_size = embedding_size
-        self.max_sequence_length_content = max_sequence_length_content
-        self.max_sequence_length_title   = max_sequence_length_title
-        self.max_sequence_lenght_query   = max_sequence_length_query
-        self.hidden_size = hidden_size
-        self.batch_size = batch_size
-        self.max_epochs = max_epochs
-        self.outdir     = outdir
-        self.emb_tr     = emb_tr
-        self.early_stop = early_stop
-
-        config_file.write("Learning rate " + str(self.learning_rate) + "\n")
-        config_file.write("Embedding size " + str(self.embedding_size) + "\n")
-        config_file.write("hidden size " + str(self.hidden_size) + "\n")
-        config_file.write("Batch size " + str(self.batch_size) + "\n")
-        config_file.write("Max Epochs" + str(self.max_epochs) + "\n")
-        config_file.write("outdir " + str(self.outdir) + "\n")
-        config_file.write("Early stop " + str(self.early_stop) + "\n")
-        config_file.write("Embedding training" + str(self.emb_tr) + "\n")
-        config_file.close() 
-
 
 class run_model:
 
@@ -282,7 +225,6 @@ class run_model:
                 f1.write(s + "\n")
                 f1.write(t +"\n")
 
-
     def print_titles(self, sess, data_set, total_examples):
 
         """ Prints the titles for the requested examples.
@@ -293,7 +235,6 @@ class run_model:
                 total_examples: Number of samples for which title is printed.
 
         """
-
         train_content, train_title, train_labels, train_query, train_weights, train_content_seq, train_query_seq, 
         max_content, max_title, max_query = self.dataset.next_batch(data_set, total_examples, False)
 
@@ -319,7 +260,6 @@ class run_model:
             print ("True Summary is " + self.dataset.decode_to_sentence(true_labels[i]))
 
 
-
     def run_training(self):
 
         """ Train the graph for a number of epochs 
@@ -328,34 +268,31 @@ class run_model:
         with tf.Graph().as_default():
 
             tf.set_random_seed(1357)
-            self.config.max_sequence_length_content = max(val.max_length_content for i,val in self.dataset.datasets.iteritems())
-            self.config.max_sequence_length_title   = max(val.max_length_title for i,val in self.dataset.datasets.iteritems())
-            self.config.max_sequence_length_query   = max(val.max_length_query for i, val in self.dataset.datasets.iteritems())
-
             len_vocab = self.dataset.length_vocab()
             initial_embeddings = self.dataset.vocab.embeddings
 
             self.add_placeholders()
 
             # Build a Graph that computes predictions from the inference model.
-            self.logits = self.model.inference(self.encode_input_placeholder,
+            self.logits = self.model.inference(self.config,
+                                               self.encode_input_placeholder,
                                                self.decode_input_placeholder, 
                                                self.query_input_placeholder,
-                                               self.config.embedding_size,
+                                               self.config.config_dir["embedding_size"],
                                                self.feed_previous_placeholder,
                                                len_vocab,
-                                               self.config.hidden_size,
+                                               self.config.config_dir["hidden_size"],
                                                weights = self.weights_placeholder,
                                                encoder_sequence_length = self.encoder_sequence_length,
                                                query_sequence_length = self.query_sequence_length,
                                                initial_embedding = initial_embeddings,
-                                               embedding_trainable=self.config.emb_tr)
+                                               embedding_trainable=self.config.config_dir["embedding_trainable"])
 
             # Add to the Graph the Ops for loss calculation.
             self.loss_op = self.model.loss_op(self.logits, self.label_placeholder, self.weights_placeholder)
 
             # Add to the Graph the Ops that calculate and apply gradients.
-            self.train_op = self.model.training(self.loss_op, self.config.learning_rate)
+            self.train_op = self.model.training(self.loss_op, self.config.config_dir["learning_rate"])
 
 
             # Add the variable initializer Op.
@@ -368,34 +305,36 @@ class run_model:
             # Create a session for running Ops on the Graph.
             sess = tf.Session()
 
+            outdir = self.config.config_dir["outdir"]
             # Instantiate a SummaryWriter to output summaries and the Graph.
-            summary_writer = tf.train.SummaryWriter(self.config.outdir + "Logs" ,sess.graph)
+            summary_writer = tf.train.SummaryWriter(outdir + "Logs" ,sess.graph)
 
 
             # if best_model exists pick the weights from there:
-            if (os.path.exists(self.config.outdir + "best_model")):
-                saver.restore(sess, self.config.outdir + "best_model")
+            if (os.path.exists(outdir + "best_model")):
+                saver.restore(sess, outdir + "best_model")
                 best_val_loss = self.do_eval(sess, self.dataset.datasets["valid"])
                 test_loss    = self.do_eval(sess, self.dataset.datasets["test"])
                 print ("Validation Loss:{}".format(best_val_loss))
                 print ("Test Loss:{}".format(test_loss))
 
 
-            if (os.path.exists(self.config.outdir + "last_model")):
-                saver.restore(sess, self.config.outdir + "last_model")
+            if (os.path.exists(outdir + "last_model")):
+                saver.restore(sess, outdir + "last_model")
 
 
             else:
                 # Run the Op to initialize the variables.
                 sess.run(init)
+
 	        best_val_loss = float('inf')
 
             # To store the model that gives the best result on validation.
             best_val_epoch = 0
 
-            for epoch in xrange(self.config.max_epochs):
+            for epoch in xrange(self.config.config_dir["max_epochs"]):
 
-                print ("Epoch: " + str(epoch))
+                print ("Epoch: " + str(epoch))o
                 start = time.time()
 
                 print('Trainable Variables') 
