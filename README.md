@@ -17,18 +17,17 @@ The implementation is based on [this](https://arxiv.org/abs/1704.08300) work.
 ## Data Download and Preprocessing
 
 ## Get the Glove embeddings:
- wget http://nlp.stanford.edu/data/glove.840B.300d.zip
- mkdir Embedding
- mv glove.840B.300d.zip Embedding
- unzip glove.840B.300d.zip
+    wget http://nlp.stanford.edu/data/glove.840B.300d.zip
+    mkdir Embedding
+    mv glove.840B.300d.zip Embedding
+    unzip glove.840B.300d.zip
  
  ## Configuration file:
- * The hyper parameters could be changed in the config.txt file.
- * The influence of eah hyperarameter have been explained in detail in the comments in config.txt
+     * The hyper parameters could be changed in the config.txt file.
+     * The influence of eah hyperarameter have been explained in detail in the comments in config.txt
  ## Train the model
-  sh ./train.sh
-  
+      sh ./train.sh config.txt
+      
  ## Inference:
-  test.sh will refer to the config.txt to initialize the graph that will be used for creating the graph
-  for inference.
-  sh ./test.sh
+     test.sh will refer to the config.txt to initialize the graph that will be used for creating the graph for inference.
+     sh ./test.sh config.txt
