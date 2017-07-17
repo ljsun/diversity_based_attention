@@ -31,7 +31,8 @@ class run_model:
         self.model   = bA
 
         # Vocabulary and datasets are initialized.
-        self.dataset = PadDataset(wd, self.config.embedding_size)
+        self.dataset = PadDataset(wd, self.config.embedding_size, diff_vocab = self.config.config_dir["diff_vocab"], embedding_path = self.config.config_dir["embedding_path"],\
+				  limit_encode = self.config.config_dir["limit_encode"], limit_decode = self.config.config_dir["limit_decode"])
 
 
     def add_placeholders(self):

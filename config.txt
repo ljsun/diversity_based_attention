@@ -54,7 +54,7 @@ batch_size = 32
 # Property: num_epochs:
 # Number of maximum epochs
 
-num_epochs = 50
+max_epochs = 50
 
 # Property: Early stop:
 # Number of epochs for early stop criteria
@@ -64,17 +64,32 @@ early_stop = 50
 # Property: outdir:
 # Path to the output directory where the model and the predictions will be saved
 
-outdir = "output/"
+outdir = output/
 
 # Property: working_dir:
 # Path to the folder that contains train/valid/test data
 
-working_dir = "data/"
+working_dir = data/
 
 # Property: embedding_trainable:
 # Whether to fine tune the pretrained embedding
 
 embedding_trainable = True
+
+# Property: embedding_path:
+# Path to the pretrained embedding
+
+embedding_path = Embedding/embeddings
+
+#Property: limit_encode:
+# Frequency used as a cutoff for encoder vocab
+
+limit_encode = 0
+
+#Property limit_decode:
+# Frequency used as a cutoff for decoder vocab
+
+limit_decode = 0
 
 # Property: learning_rate:
 # Learning rate to be used for training.
@@ -93,4 +108,5 @@ max_sequence_length_title = 20
 
 # Property: max_sequence_length_query:
 # Maximum length of the query sentence allowed
+
 max_sequence_length_query = 20

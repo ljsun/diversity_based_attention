@@ -269,7 +269,7 @@ def dynamic_distraction_decoder(config,
       if i == 0 and initial_state_attention:
         with variable_scope.variable_scope(variable_scope.get_variable_scope(),
                                            reuse=True):
-          if (config.config_dir["distract_static"] == True):
+          if (config.config_dir["is_query_static"] == True):
           	attns_query = query_state
           else:
           	attns_query = attention_query(state)
@@ -278,7 +278,7 @@ def dynamic_distraction_decoder(config,
           attns_state = attention(list_of_queries)
 
       else:
-        if (config.config_dir["distract_static"] == True):
+        if (config.config_dir["is_query_static"] == True):
           attns_query = query_state
         else:
           attns_query = attention_query(state)
