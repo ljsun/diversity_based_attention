@@ -10,10 +10,6 @@ The implementation is based on [this](https://arxiv.org/abs/1704.08300) work.
 > ACL, 2017
 
 ## Requirements:
-> tensorflow-0.12
-
-> gensim
-
-> nltk
-
-> numpy
+* [tensorflow-0.12](https://www.tensorflow.org/versions/r0.12/get_started/os_setup)
+* [gensim](https://pypi.python.org/pypi/gensim)
+* [nltk](http://www.nltk.org/install.html)
