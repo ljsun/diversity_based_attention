@@ -31,3 +31,8 @@ The implementation is based on [this](https://arxiv.org/abs/1704.08300) work.
  ## Inference:
      test.sh will refer to the config.txt to initialize the graph that will be used for creating the graph for inference.
      sh ./test.sh config.txt
+
+## Evaluation:
+    The test.sh script will generate the predictions for the test data in the working directory output directory mentioned
+    in the config.txt file.
+    python eval.py --output_dir output/test_final_results_plabels data/test_content
