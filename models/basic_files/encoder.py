@@ -17,7 +17,6 @@ from . import rnn
 from tensorflow.python.ops import variable_scope
 from tensorflow.python.util import nest
 from . import rnn_cell
-from .basics import *
 
 
 """ Vanilla-Attend-Decode model will have only document attention 
@@ -31,7 +30,7 @@ linear = rnn_cell._linear  # pylint: disable=protected-access
 
 
 def call_rnn_uni_static(cell_encoder,
-                        embeddings, sequence_length,
+                        embeddings,
                         dtype):
 
   encoder_outputs, encoder_state = rnn.rnn(cell_encoder, embeddings, dtype)
@@ -52,7 +51,7 @@ def call_rnn_uni_dynamic(cell_encoder,
 
 def call_rnn_bidir_static(cell_encoder_fw, 
                           cell_encoder_bw,
-                          embeddings, sequence_length,
+                          embeddings,
                           dtype):
 
   encoder_outputs, encoder_state_fw, encoder_state_bw =  rnn.bidirectional_rnn(
@@ -82,22 +81,23 @@ def call_rnn(config,
              cell_encoder_fw,
              cell_encoder_bw,
              embeddings,
+             sequence_length,
              dtype):
 
   if config.config_dir["is_dynamic"] == False and config.config_dir["is_bidir"] == False:
     return call_rnn_uni_static(cell_encoder_fw, embeddings, dtype)
 
   elif config.config_dir["is_dynamic"] == True and config.config_dir["is_bidir"] == False:
-    return call_rnn_uni_dynamic(cell_encoder_fw, embeddings, dtype)
+    return call_rnn_uni_dynamic(cell_encoder_fw, embeddings, sequence_length, dtype)
 
   elif config.config_dir["is_dynamic"] == False and config.config_dir["is_bidir"] == True:
     return call_rnn_bidir_static(cell_encoder_fw, cell_encoder_bw, embeddings, dtype)
 
   else:
-    return call_rnn_bidir_dynamic(cell_encoder_fw, cell_encoder_bw, embeddings, dtype)
+    return call_rnn_bidir_dynamic(cell_encoder_fw, cell_encoder_bw, embeddings, sequence_length, dtype)
 
 
-def dynamic_encoder(config,
+def encoder(config,
                     encoder_inputs,
                     query_inputs,
                     cell_encoder_fw,
@@ -109,7 +109,8 @@ def dynamic_encoder(config,
                     embedding_trainable=False,
                     dtype=None,
                     scope=None,
-                    sequence_length=None):
+                    sequence_length_encoder=None,
+                    sequence_length_query=None):
   """Embedding sequence-to-sequence model with attention.
 
   This model first embeds encoder_inputs by a newly created embedding (of shape
@@ -174,18 +175,18 @@ def dynamic_encoder(config,
     print("Shape in embedded inputs:", embedded_inputs[0].get_shape())
 
     with variable_scope.variable_scope("Encoder_Cell"):
-      encoder_outputs, encoder_state = call_rnn(
-          cell_encoder_fw, cell_encoder_bw, embedded_inputs, sequence_length, dtype=dtype)
+      encoder_outputs, encoder_state = call_rnn(config,
+          cell_encoder_fw, cell_encoder_bw, embedded_inputs, sequence_length_encoder, dtype=dtype)
 
     if config.config_dir["same_cell"] == True:
       with variable_scope.variable_scope("Encoder_Cell", reuse=True):
-        query_outputs, query_state = call_rnn(
-        cell_encoder_fw, cell_encoder_bw, query_embeddings, sequence_length, dtype = dtype)
+        query_outputs, query_state = call_rnn(config,
+        cell_encoder_fw, cell_encoder_bw, query_embeddings, sequence_length_query, dtype = dtype)
 
     else:
       with variable_scope.variable_scope("Query_Cell"):
-        query_outputs, query_state = call_rnn(
-        cell_encoder_fw, cell_encoder_bw, query_embeddings, sequence_length, dtype = dtype)
+        query_outputs, query_state = call_rnn(config,
+        cell_encoder_fw, cell_encoder_bw, query_embeddings, sequence_length_query, dtype = dtype)
 
 
     encoder_size = encoder_state.get_shape()[1].value

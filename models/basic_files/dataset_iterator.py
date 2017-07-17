@@ -12,8 +12,8 @@ from vocab import *
 class Datatype:
 
     def __init__(self, name, title, label, content, query, num_samples, content_sequence_length, \
-    			 query_sequence_length,\
-    			 max_length_content, max_length_title, max_length_query):
+                 query_sequence_length,\
+                 max_length_content, max_length_title, max_length_query):
         """ Defines the dataset for each category valid/train/test
 
         Args:
@@ -36,6 +36,9 @@ class Datatype:
         self.labels  = label
         self.query   = query
 
+        self.content_sequence_length = content_sequence_length
+        self.query_sequence_length   = query_sequence_length
+
         self.number_of_samples  = num_samples
         self.max_length_content = max_length_content
         self.max_length_title   = max_length_title - 1
@@ -53,7 +56,7 @@ class PadDataset:
             Arguments: 
                 data       : Batch that needs to be padded
                 max_length : Max_length to which the samples needs to be
-	                         padded.
+                             padded.
 
             Returns:
                 padded_data : Each sample in the batch is padded to 
@@ -61,17 +64,20 @@ class PadDataset:
         """
 
         padded_data = []
-
+        sequence_length_batch = []
         for lines in data:
             if (len(lines) < max_length):
                 temp = np.lib.pad(lines, (0,max_length - len(lines)),
                     'constant', constant_values=0)
+
+                sequence_length_batch.append(len(lines))
             else:
                 temp = lines[:max_length]
+                sequence_length_batch.append(max_length)
 
             padded_data.append(temp)
 
-        return padded_data
+        return padded_data, sequence_length_batch
 
 
     def make_batch(self, data, batch_size, count, max_length):
@@ -151,21 +157,20 @@ class PadDataset:
         else:
             dt.global_count_test  = count1 % dt.number_of_samples
         
-        return contents, titles, labels, query, weights, content_sequence_length, query_sequence_length,\
-        	   max_length_content, max_length_title, max_length_query
+        return contents, titles, labels, query, weights, content_sequence_length, query_sequence_length, max_length_content, max_length_title, max_length_query
    
  
     def load_data_file(self,name, title_file, content_file, query_file):
         """ Each of the (train/test/valid) is loaded separately.
 
-	    Arguments:
-		* title_file   : The file containing the summaries
+        Arguments:
+        * title_file   : The file containing the summaries
                 * content_file : The file containing the source documents
                 * query_file   : The file containing the queries
 
 
            Returns:
-	       * A Datatype object that contains relevant information to 
+           * A Datatype object that contains relevant information to 
                  create batches from the given dataset
  
         """
@@ -219,13 +224,13 @@ class PadDataset:
 
 
     def load_data(self, wd="../Data/"):
-	""" Load all the datasets
+        """ Load all the datasets
 
             Arguments:
-		* wd: Directory where all the data files are stored
+        * wd: Directory where all the data files are stored
 
             Returns:
-	        * void
+            * void
         """
         s = wd
         self.datasets = {}
@@ -238,49 +243,49 @@ class PadDataset:
 
 
     def __init__(self,  working_dir = "../Data/", embedding_size=100, global_count = 0, diff_vocab = False,\
-				 embedding_path="../Data/embeddings.bin", limit_encode = 0, limit_decode=0):
-		""" Create the vocabulary and load all the datasets
+                 embedding_path="../Data/embeddings.bin", limit_encode = 0, limit_decode=0):
+        """ Create the vocabulary and load all the datasets
 
             Arguments:
         * working_dir   : Directory path where all the data files are stored
         * embedding_size: Dimension of vector representation for each word
         * diff_vocab    : Different vocab for encoder and decoder. 
 
-	    Returns:
-		* void
+        Returns:
+        * void
 
         """
         filenames_encode = [ working_dir + "train_content", working_dir + "train_query" ]
         filenames_decode = [ working_dir + "train_summary" ]
 
-		self.global_count = 0
+        self.global_count = 0
         self.vocab        = Vocab()
 
         if (diff_vocab == False):
-        	filenames_encode = filenames_encode + filenames_decode
-        	filenames_decode = filenames_decode + filenames_decode
+            filenames_encode = filenames_encode + filenames_decode
+            filenames_decode = filenames_decode + filenames_decode
 
-        self.vocab.construct_vocab(filenames_encode, filenames_decode, embedding_size, embedding_path
-        						   limit_encode, limit_decode)
+        self.vocab.construct_vocab(filenames_encode, filenames_decode, embedding_size, embedding_path,
+                                   limit_encode, limit_decode)
         self.load_data(working_dir)
 
 
     def length_vocab_encode(self):
-		""" Returns the encoder vocabulary size
-		"""
+        """ Returns the encoder vocabulary size
+        """
         return self.vocab.len_vocab_encode
 
     def length_vocab_decode(self):
-    	""" Returns the decoder vocabulary size
-    	"""
-    	return self.vocab.len_vocab_decode
+        """ Returns the decoder vocabulary size
+        """
+        return self.vocab.len_vocab_decode
 
     def decode_to_sentence(self, decoder_states):
-		""" Decodes the decoder_states to sentence
-		"""
-		s = ""
+        """ Decodes the decoder_states to sentence
+        """
+        s = ""
         for temp in (decoder_states):
-			word = self.vocab.decode_word_decoder(temp)
+            word = self.vocab.decode_word_decoder(temp)
             s = s + " " + word
 
         return s

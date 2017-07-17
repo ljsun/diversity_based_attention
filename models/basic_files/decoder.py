@@ -17,8 +17,7 @@ from . import rnn
 from tensorflow.python.ops import variable_scope
 from tensorflow.python.util import nest
 from . import rnn_cell
-from .basics import *
-
+from . import utils
 # TODO(ebrevdo): Remove once _linear is fully deprecated.
 linear = rnn_cell._linear  # pylint: disable=protected-access
 
@@ -35,6 +34,7 @@ def dynamic_distraction_decoder(config,
                       loop_function=None,
                       dtype=None,
                       scope=None,
+                      query_state = query_state,
                       initial_state_attention=False):
   """RNN decoder with attention for the sequence-to-sequence model.
 
@@ -116,10 +116,10 @@ def dynamic_distraction_decoder(config,
 
     print ("Preksha " + scope.name)
     if attn_length_state is None:
-      attn_length_state = shape(attention_states)[1]
+      attn_length_state = attention_states.get_shape()[1]
 
     if attn_length_query is None:
-      attn_length_query = shape(attention_states_query)[1]
+      attn_length_query = attention_states_query.get_shape()[1]
 
     attn_size_state = attention_states.get_shape()[2].value
     attn_size_query = attention_states_query.get_shape()[2].value
@@ -278,10 +278,10 @@ def dynamic_distraction_decoder(config,
           attns_state = attention(list_of_queries)
 
       else:
-          if (config.config_dir["distract_static"] == True):
-          	attns_query = query_state
-          else:
-          	attns_query = attention_query(state)
+        if (config.config_dir["distract_static"] == True):
+          attns_query = query_state
+        else:
+          attns_query = attention_query(state)
 
         list_of_queries = [state, attns_query]
         attns_state = attention(list_of_queries)
@@ -297,7 +297,7 @@ def dynamic_distraction_decoder(config,
   return outputs, state
 
 def dynamic_distraction_decoder_wrapper(config,
-				decoder_inputs,
+                                decoder_inputs,
                                 initial_state,
                                 distract_initial_state,
                                 attention_states,
@@ -314,6 +314,7 @@ def dynamic_distraction_decoder_wrapper(config,
                                 embedding_scope = None,
                                 dtype=None,
                                 scope=None,
+                                query_state = None,
                                 initial_state_attention=False):
   """RNN decoder with embedding and attention and a pure-decoding option.
 
@@ -371,7 +372,7 @@ def dynamic_distraction_decoder_wrapper(config,
 
     embedding = variable_scope.get_variable("embedding",
                                             [num_symbols, embedding_size])
-    loop_function = _extract_argmax_and_embed(
+    loop_function = utils._extract_argmax_and_embed(
         embedding, output_projection,
         update_embedding_for_previous) if feed_previous else None
     emb_inp = [
@@ -387,6 +388,7 @@ def dynamic_distraction_decoder_wrapper(config,
         cell = cell_encoder,
         distract_initial_state = distract_initial_state,
         distraction_cell = distraction_cell,
+        query_state = query_state,
         output_size=output_size,
         num_heads=num_heads,
         loop_function=loop_function,
@@ -410,49 +412,51 @@ def distraction_decoder_start(config,
                              embedding_scope = None,
                              dtype=None,
                              scope=None,
+                             query_state = None,
                              initial_state_attention=False):
-  """Embedding sequence-to-sequence model with attention.
+    """Embedding sequence-to-sequence model with attention.
 
-  This model first embeds encoder_inputs by a newly created embedding (of shape
-  [num_encoder_symbols x input_size]). Then it runs an RNN to encode
-  embedded encoder_inputs into a state vector. It keeps the outputs of this
-  RNN at every step to use for attention later. Next, it embeds decoder_inputs
-  by another newly created embedding (of shape [num_decoder_symbols x
-  input_size]). Then it runs attention decoder, initialized with the last
-  encoder state, on embedded decoder_inputs and attending to encoder outputs.
+    This model first embeds encoder_inputs by a newly created embedding (of shape
+    [num_encoder_symbols x input_size]). Then it runs an RNN to encode
+    embedded encoder_inputs into a state vector. It keeps the outputs of this
+    RNN at every step to use for attention later. Next, it embeds decoder_inputs
+    by another newly created embedding (of shape [num_decoder_symbols x
+    input_size]). Then it runs attention decoder, initialized with the last
+    encoder state, on embedded decoder_inputs and attending to encoder outputs.
 
-  Args:
-    encoder_inputs: A list of 1D int32 Tensors of shape [batch_size].
-    decoder_inputs: A list of 1D int32 Tensors of shape [batch_size].
-    cell: rnn_cell.RNNCell defining the cell function and size.
-    num_encoder_symbols: Integer; number of symbols on the encoder side.
-    num_decoder_symbols: Integer; number of symbols on the decoder side.
-    embedding_size: Integer, the length of the embedding vector for each symbol.
-    num_heads: Number of attention heads that read from attention_states.
-    output_projection: None or a pair (W, B) of output projection weights and
-      biases; W has shape [output_size x num_decoder_symbols] and B has
-      shape [num_decoder_symbols]; if provided and feed_previous=True, each
-      fed previous output will first be multiplied by W and added B.
-    feed_previous: Boolean or scalar Boolean Tensor; if True, only the first
-      of decoder_inputs will be used (the "GO" symbol), and all other decoder
-      inputs will be taken from previous outputs (as in embedding_rnn_decoder).
-      If False, decoder_inputs are used as given (the standard decoder case).
-    dtype: The dtype of the initial RNN state (default: tf.float32).
-    scope: VariableScope for the created subgraph; defaults to
-      "embedding_attention_seq2seq".
-    initial_state_attention: If False (default), initial attentions are zero.
-      If True, initialize the attentions from the initial state and attention
-      states.
+    Args:
+      encoder_inputs: A list of 1D int32 Tensors of shape [batch_size].
+      decoder_inputs: A list of 1D int32 Tensors of shape [batch_size].
+      cell: rnn_cell.RNNCell defining the cell function and size.
+      num_encoder_symbols: Integer; number of symbols on the encoder side.
+      num_decoder_symbols: Integer; number of symbols on the decoder side.
+      embedding_size: Integer, the length of the embedding vector for each symbol.
+      num_heads: Number of attention heads that read from attention_states.
+      output_projection: None or a pair (W, B) of output projection weights and
+        biases; W has shape [output_size x num_decoder_symbols] and B has
+        shape [num_decoder_symbols]; if provided and feed_previous=True, each
+        fed previous output will first be multiplied by W and added B.
+      feed_previous: Boolean or scalar Boolean Tensor; if True, only the first
+        of decoder_inputs will be used (the "GO" symbol), and all other decoder
+        inputs will be taken from previous outputs (as in embedding_rnn_decoder).
+        If False, decoder_inputs are used as given (the standard decoder case).
+      dtype: The dtype of the initial RNN state (default: tf.float32).
+      scope: VariableScope for the created subgraph; defaults to
+        "embedding_attention_seq2seq".
+      initial_state_attention: If False (default), initial attentions are zero.
+        If True, initialize the attentions from the initial state and attention
+        states.
 
-  Returns:
-    A tuple of the form (outputs, state), where:
-      outputs: A list of the same length as decoder_inputs of 2D Tensors with
-        shape [batch_size x num_decoder_symbols] containing the generated
-        outputs.
-      state: The state of each decoder cell at the final time-step.
-        It is a 2D Tensor of shape [batch_size x cell.state_size].
-  """
+    Returns:
+      A tuple of the form (outputs, state), where:
+        outputs: A list of the same length as decoder_inputs of 2D Tensors with
+          shape [batch_size x num_decoder_symbols] containing the generated
+          outputs.
+        state: The state of each decoder cell at the final time-step.
+          It is a 2D Tensor of shape [batch_size x cell.state_size].
+    """
 
+    encoder_state = initial_state
     output_size = None
     if output_projection is None:
       cell_encoder_fw = rnn_cell.OutputProjectionWrapper(cell_encoder_fw, num_decoder_symbols)
@@ -463,12 +467,14 @@ def distraction_decoder_start(config,
       	  config,
           decoder_inputs,
           initial_state=encoder_state,
-          attention_state=attention_states_encoder,
+          attention_states=attention_states_encoder,
           attention_states_query = attention_states_query,  
           cell_encoder = cell_encoder_fw,
           num_symbols = num_decoder_symbols,
           embedding_size = embedding_size,
           distract_initial_state = encoder_state,
+          distraction_cell = distraction_cell,
+          query_state = query_state,
           num_heads=num_heads,
           output_size=output_size,
           output_projection=output_projection,
@@ -494,7 +500,8 @@ def distraction_decoder_start(config,
             num_symbols=num_decoder_symbols,
             embedding_size = embedding_size,
             distract_initial_state = encoder_state,
-            distraction_cell = distraction_cell, 
+            distraction_cell = distraction_cell,
+            query_state = query_state, 
             num_heads=num_heads,
             output_size=output_size,
             output_projection=output_projection,

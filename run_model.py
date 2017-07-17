@@ -39,14 +39,14 @@ class run_model:
         """ Generate placeholder variables to represent input tensors
         """
 
-        self.encode_input_placeholder  = tf.placeholder(tf.int32, shape=(self.config.max_sequence_length_content, None), name ='encode')
-        self.decode_input_placeholder  = tf.placeholder(tf.int32, shape=(self.config.max_sequence_length_title, None),   name = 'decode')
-        self.query_input_placeholder   = tf.placeholder(tf.int32, shape=(self.config.max_sequence_length_query, None),   name = 'query')
-        self.label_placeholder         = tf.placeholder(tf.int32, shape=(self.config.max_sequence_length_title, None),   name = 'labels')
-        self.weights_placeholder       = tf.placeholder(tf.int32, shape=(self.config.max_sequence_length_title, None),   name = 'weights')
+        self.encode_input_placeholder  = tf.placeholder(tf.int32, shape=(self.config.config_dir["max_sequence_length_content"], None), name ='encode')
+        self.decode_input_placeholder  = tf.placeholder(tf.int32, shape=(self.config.config_dir["max_sequence_length_title"], None),   name = 'decode')
+        self.query_input_placeholder   = tf.placeholder(tf.int32, shape=(self.config.config_dir["max_sequence_length_query"], None),   name = 'query')
+        self.label_placeholder         = tf.placeholder(tf.int32, shape=(self.config.config_dir["max_sequence_length_title"], None),   name = 'labels')
+        self.weights_placeholder       = tf.placeholder(tf.int32, shape=(self.config.config_dir["max_sequence_length_title"], None),   name = 'weights')
         self.feed_previous_placeholder = tf.placeholder(tf.bool, name='feed_previous')
-        self.encode_sequence_length    = tf.placeholder(tf.int32, shape=None, name=encode_seq_length)
-        self.query_sequence_length     = tf.placeholder(tf.int32, shape=None, name=query_seq_length)
+        self.encode_sequence_length    = tf.placeholder(tf.int32, shape=None, name="encode_seq_length")
+        self.query_sequence_length     = tf.placeholder(tf.int32, shape=None, name="query_seq_length")
         #Could be used for dynamic padding
         #self.max_content_per_batch_p   = tf.placeholder(tf.int32, name='max_content')
         #self.max_title_per_batch_p     = tf.placeholder(tf.int32, name='max_title')
@@ -199,7 +199,7 @@ class run_model:
         steps_per_epoch =  int(math.ceil(float(data_set.number_of_examples) / float(self.config.batch_size)))
 
         for step in xrange(steps_per_epoch):
-            train_content, train_title, train_labels, train_query, train_weights, train_content_seq, train_query_seq, 
+            train_content, train_title, train_labels, train_query, train_weights, train_content_seq, train_query_seq,\
             max_content, max_title, max_query = self.dataset.next_batch(data_set,self.config.batch_size, False)
 
             feed_dict = self.fill_feed_dict(train_content, train_title, train_labels, train_query, train_weights,
@@ -235,7 +235,7 @@ class run_model:
                 total_examples: Number of samples for which title is printed.
 
         """
-        train_content, train_title, train_labels, train_query, train_weights, train_content_seq, train_query_seq, 
+        train_content, train_title, train_labels, train_query, train_weights, train_content_seq, train_query_seq,\
         max_content, max_title, max_query = self.dataset.next_batch(data_set, total_examples, False)
 
         feed_dict = self.fill_feed_dict(train_content, train_title, train_labels, train_query, train_weights, train_content_seq, 
@@ -268,7 +268,7 @@ class run_model:
         with tf.Graph().as_default():
 
             tf.set_random_seed(1357)
-            len_vocab = self.dataset.length_vocab()
+            len_vocab = self.dataset.length_vocab_encode()
             initial_embeddings = self.dataset.vocab.embeddings
 
             self.add_placeholders()
@@ -283,7 +283,7 @@ class run_model:
                                                len_vocab,
                                                self.config.config_dir["hidden_size"],
                                                weights = self.weights_placeholder,
-                                               encoder_sequence_length = self.encoder_sequence_length,
+                                               encoder_sequence_length = self.encode_sequence_length,
                                                query_sequence_length = self.query_sequence_length,
                                                initial_embedding = initial_embeddings,
                                                embedding_trainable=self.config.config_dir["embedding_trainable"])
@@ -334,7 +334,7 @@ class run_model:
 
             for epoch in xrange(self.config.config_dir["max_epochs"]):
 
-                print ("Epoch: " + str(epoch))o
+                print ("Epoch: " + str(epoch))
                 start = time.time()
 
                 print('Trainable Variables') 

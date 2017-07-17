@@ -34,14 +34,14 @@ class Config:
         	 	config_dir[key] = value
 
         self.config_dir = config_dir
-        self.learning_rate  = learning_rate
-        self.embedding_size = embedding_size
-        self.max_sequence_length_content = max_sequence_length_content
-        self.max_sequence_length_title   = max_sequence_length_title
-        self.max_sequence_lenght_query   = max_sequence_length_query
-        self.hidden_size = hidden_size
-        self.batch_size = batch_size
-        self.max_epochs = max_epochs
-        self.outdir     = outdir
-        self.emb_tr     = emb_tr
-        self.early_stop = early_stop
+        self.learning_rate  = self.config_dir["learning_rate"]
+        self.embedding_size = self.config_dir["embedding_size"]
+        self.max_sequence_length_content = self.config_dir["max_sequence_length_content"]
+        self.max_sequence_length_title   = self.config_dir["max_sequence_length_title"]
+        self.max_sequence_lenght_query   = self.config_dir["max_sequence_length_query"]
+        self.hidden_size = self.config["hidden_size"]
+        self.batch_size = self.config["batch_size"]
+        self.max_epochs = self.config["max_epochs"]
+        self.outdir     = self.config["outdir"]
+        self.emb_tr     = self.config_dir["emb_tr"]
+        self.early_stop = self.config_dir["early_stop"]

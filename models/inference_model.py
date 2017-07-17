@@ -1,6 +1,8 @@
 import tensorflow as tf
 import numpy as numpy
 from basic_files.dynamic_distraction import *
+from basic_files.encoder import *
+from basic_files.decoder import *
 from basic_files.rnn_cell import *
 from basic_files.utils import *
 import sys
@@ -88,17 +90,16 @@ class BasicAttention:
         ei = tf.unpack(encoder_inputs1)
         di = tf.unpack(decoder_inputs1)
         qi = tf.unpack(query_inputs)
-        encoder_state, encoder_outputs, query_state, query_outputs, embedding_scope = distraction_encoder(
+        encoder_state, encoder_outputs, query_state, query_outputs, embedding_scope = encoder(
         										config,
         										encoder_inputs = ei,
-                                                decoder_inputs = di,
                                                 query_inputs = qi,
                                                 cell_encoder_fw = cell_encoder_fw,
                                                 cell_encoder_bw = cell_encoder_bw,
-                                                distraction_cell = distract_cell,
                                                 embedding_trainable=embedding_trainable,
+                                                sequence_length_encode = encoder_sequence_length,
+                                                sequence_length_query = query_sequence_length,
                                                 num_encoder_symbols= len_vocab,
-                                                num_decoder_symbols= len_vocab,
                                                 embedding_size = embedding_size,
                                                 initial_embedding = initial_embedding,
                                                 dtype=tf.float32)
@@ -106,7 +107,7 @@ class BasicAttention:
         if (config.config_dir["diff_vocab"]):
         	embedding_scope = None
 
-        self.final_outputs = distraction_decoder_start(config,
+        outputs = distraction_decoder_start(config,
 												decoder_inputs = di,
 												attention_states_encoder = encoder_outputs, 
 												attention_states_query = query_outputs,
@@ -119,6 +120,7 @@ class BasicAttention:
                                                 output_projection= (self.projection_W, self.projection_B),
                                                 feed_previous= feed_previous,
                                                 initial_embedding = initial_embedding,
+                                                query_state = query_state,
                                                 embedding_scope = embedding_scope,
                                                 dtype=tf.float32)
 

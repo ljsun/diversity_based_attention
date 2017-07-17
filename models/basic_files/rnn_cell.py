@@ -233,7 +233,7 @@ class GRUCell(RNNCell):
 
 
 
-class GRUCell_soft(RNNCell):
+class DistractionGRUCell_soft(RNNCell):
   """Gated Recurrent Unit cell (cf. http://arxiv.org/abs/1406.1078)."""
 
   def __init__(self, num_units, input_size=None, activation=tanh):
@@ -276,7 +276,7 @@ class GRUCell_soft(RNNCell):
     return distract_h, distract_h
 
 
-class GRUCell_hard(RNNCell):
+class DistractionGRUCell_hard(RNNCell):
   """Gated Recurrent Unit cell (cf. http://arxiv.org/abs/1406.1078)."""
 
   def __init__(self, num_units, input_size=None, activation=tanh):
@@ -323,7 +323,7 @@ class GRUCell_hard(RNNCell):
     return distract_h, distract_h
 
 
-class GRUCell_subtract(RNNCell):
+class DistractionGRUCell_subtract(RNNCell):
   """Gated Recurrent Unit cell (cf. http://arxiv.org/abs/1406.1078)."""
 
   def __init__(self, num_units, input_size=None, activation=tanh):
@@ -573,7 +573,7 @@ class DistractionLSTMCell_soft(RNNCell):
       else:
         new_state = array_ops.concat(1, [new_c, new_h])
  
-     return new_h, new_state
+      return new_h, new_state
 
 
 class DistractionLSTMCell_hard(RNNCell):
@@ -740,44 +740,7 @@ class DistractionLSTMCell_subtract(RNNCell):
       else:
         new_state = array_ops.concat(1, [new_c, new_h])
  
-     return new_h, new_state
-
-
-def _get_concat_variable(name, shape, dtype, num_shards):
-  """Get a sharded variable concatenated into one tensor."""
-  sharded_variable = _get_sharded_variable(name, shape, dtype, num_shards)
-  if len(sharded_variable) == 1:
-    return sharded_variable[0]
-
-  concat_name = name + "/concat"
-  concat_full_name = vs.get_variable_scope().name + "/" + concat_name + ":0"
-  for value in ops.get_collection(ops.GraphKeys.CONCATENATED_VARIABLES):
-    if value.name == concat_full_name:
-      return value
-
-  concat_variable = array_ops.concat(0, sharded_variable, name=concat_name)
-  ops.add_to_collection(ops.GraphKeys.CONCATENATED_VARIABLES,
-                        concat_variable)
-  return concat_variable
-
-
-def _get_sharded_variable(name, shape, dtype, num_shards):
-  """Get a list of sharded variables with the given dtype."""
-  if num_shards > shape[0]:
-    raise ValueError("Too many shards: shape=%s, num_shards=%d" %
-                     (shape, num_shards))
-  unit_shard_size = int(math.floor(shape[0] / num_shards))
-  remaining_rows = shape[0] - unit_shard_size * num_shards
-
-  shards = []
-  for i in range(num_shards):
-    current_size = unit_shard_size
-    if i < remaining_rows:
-      current_size += 1
-    shards.append(vs.get_variable(name + "_%d" % i, [current_size] + shape[1:],
-                                  dtype=dtype))
-  return shards
-
+      return new_h, new_state
 
 
 class LSTMCell(RNNCell):
