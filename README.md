@@ -13,3 +13,22 @@ The implementation is based on [this](https://arxiv.org/abs/1704.08300) work.
 * [tensorflow-0.12](https://www.tensorflow.org/versions/r0.12/get_started/os_setup)
 * [gensim](https://pypi.python.org/pypi/gensim)
 * [nltk](http://www.nltk.org/install.html)
+
+## Data Download and Preprocessing
+
+## Get the Glove embeddings:
+ wget http://nlp.stanford.edu/data/glove.840B.300d.zip
+ mkdir Embedding
+ mv glove.840B.300d.zip Embedding
+ unzip glove.840B.300d.zip
+ 
+ ## Configuration file:
+ * The hyper parameters could be changed in the config.txt file.
+ * The influence of eah hyperarameter have been explained in detail in the comments in config.txt
+ ## Train the model
+  sh ./train.sh
+  
+ ## Inference:
+  test.sh will refer to the config.txt to initialize the graph that will be used for creating the graph
+  for inference.
+  sh ./test.sh
