@@ -3,7 +3,7 @@ import os.path
 import operator
 import pickle
 from nltk.tokenize import WhitespaceTokenizer 
-from gensim.models import Word2Vec
+from gensim.models import Word2Vec, KeyedVectors
 from collections import defaultdict
 from math import sqrt
 import numpy as np 
@@ -42,9 +42,8 @@ class Vocab():
                 Embedding matrix.
         """
         sentences = []
-
         if (os.path.exists(embedding_path) == True):
-            model = Word2Vec.load_word2vec_format(embedding_path, binary = True)
+            model = KeyedVectors.load_word2vec_format(embedding_path, binary = True)
             print ("Loading pretriained embeddings")
 
         else:
@@ -274,7 +273,7 @@ class Vocab():
 
         for index, word in sorted_list:
 
-            if word in self.embeddings_model.vocab:
+            if word in self.embeddings_model:
                 embeddings.append(self.embeddings_model[word])
             else:
                 if word in ['<pad>', '<s>', '<eos>']:
@@ -289,8 +288,8 @@ class Vocab():
 
         return embeddings
 
-    def construct_vocab(self, filenames_encoder, filenames_decoder, limit_encoder, limit_decoder,
-                        embedding_size, embedding_path):
+    def construct_vocab(self, filenames_encoder, filenames_decoder,
+                        embedding_size, embedding_path, limit_encoder, limit_decoder):
         """ Constructs the vocab, and initializes the embeddings 
             accordingly 
 

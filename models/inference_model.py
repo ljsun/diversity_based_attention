@@ -1,6 +1,5 @@
 import tensorflow as tf
 import numpy as numpy
-from basic_files.dynamic_distraction import *
 from basic_files.encoder import *
 from basic_files.decoder import *
 from basic_files.rnn_cell import *
@@ -15,7 +14,7 @@ class BasicAttention:
         as defined in Paper : A neural attention model for abstractive text summarization
     """ 
 
-    def add_cell(self,hidden_size, cell_input=None):
+    def add_cell(self,hidden_size, cell_type):
 
         """ Define the rnn_cell to be used in attention model
 
@@ -24,11 +23,10 @@ class BasicAttention:
                 hidden_size : Hidden size of cell
         """
 
-        if(cell_input is None):
-            self.enc_cell  = GRUCell(hidden_size)
+        if(cell_type is "LSTM"):
+            return LSTMCell(hidden_size)
         else:
-            self.enc_cell = cell_input
-
+            return GRUCell(hidden_size)
 
     def add_projectionLayer(self, hidden_size, len_vocab):
 
@@ -42,7 +40,7 @@ class BasicAttention:
         self.projection_W = tf.get_variable(name="Projected_W", shape=[hidden_size, len_vocab])
 
 
-    def inference(self, config, distraction_cell, cell_encoder_fw, cell_encoder_bw, cell_decoder,
+    def inference(self, config, cell_encoder_fw_type, cell_decoder_type,
     	          encoder_inputs1, decoder_inputs1,
     	          query_inputs, embedding_size, feed_previous,
                   len_vocab, hidden_size, weights, encoder_sequence_length, query_sequence_length, 
@@ -68,22 +66,26 @@ class BasicAttention:
         """
         self.add_projectionLayer(hidden_size, len_vocab)
 
-        if (config.is_bir):
+        cell_encoder_fw = self.add_cell(hidden_size, cell_encoder_fw_type)
+        cell_encoder_bw = self.add_cell(hidden_size, cell_encoder_fw_type)
+        cell_decoder    = self.add_cell(hidden_size, cell_decoder_type)
+
+        if (config.config_dir["is_bidir"]):
         	hs = 2*hidden_size
         else:
         	hs = hidden_size
 
-        if config.distract_cell == "LSTM_soft":
+        if config.config_dir["distraction_cell"] == "LSTM_soft":
         	distract_cell = DistractionLSTMCell_soft(hs, state_is_tuple = True)
-        elif config.distract_cell == "LSTM_hard":
+        elif config.config_dir["distraction_cell"] == "LSTM_hard":
         	distract_cell = DistractionLSTMCell_hard(hs, state_is_tuple=True)
-        elif config.distract_cell == "LSTM_sub":
+        elif config.config_dir["distraction_cell"] == "LSTM_sub":
         	distract_cell = DistractionLSTMCell_subtract(hs, state_is_tuple=True)
-        elif config.distract_cell == "GRU_hard":
+        elif config.config_dir["distraction_cell"] == "GRU_hard":
         	distract_cell = DistractionGRUCell_hard(hs) 
-        elif config.distract_cell == "GRU_soft":
+        elif config.config_dir["distraction_cell"] == "GRU_soft":
         	distract_cell = DistractionGRUCell_soft(hs)
-        elif config.distract_cell == "GRU_sub":
+        elif config.config_dir["distraction_decoder_start_cell"] == "GRU_sub":
         	distract_cell = DistractionGRUCell_subtract(hs)
 
         #enc_cell = DistractionLSTMCell(hidden_size)
@@ -97,7 +99,7 @@ class BasicAttention:
                                                 cell_encoder_fw = cell_encoder_fw,
                                                 cell_encoder_bw = cell_encoder_bw,
                                                 embedding_trainable=embedding_trainable,
-                                                sequence_length_encode = encoder_sequence_length,
+                                                sequence_length_encoder = encoder_sequence_length,
                                                 sequence_length_query = query_sequence_length,
                                                 num_encoder_symbols= len_vocab,
                                                 embedding_size = embedding_size,
@@ -107,7 +109,7 @@ class BasicAttention:
         if (config.config_dir["diff_vocab"]):
         	embedding_scope = None
 
-        outputs = distraction_decoder_start(config,
+        outputs, state = distraction_decoder_start(config,
 												decoder_inputs = di,
 												attention_states_encoder = encoder_outputs, 
 												attention_states_query = query_outputs,
@@ -132,7 +134,7 @@ class BasicAttention:
         return self.final_outputs
 
 
-    def loss_op(self, outputs, labels, weights, len_vocab):
+    def loss_op(self, outputs, labels, weights):
 
         """ Calculate the loss from the predicted outputs and the labels
 

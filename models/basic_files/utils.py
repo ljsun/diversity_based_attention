@@ -18,7 +18,6 @@ from . import rnn
 from tensorflow.python.ops import variable_scope
 from tensorflow.python.util import nest
 from . import rnn_cell
-from .basics import *
 
 def _extract_argmax_and_embed(embedding, output_projection=None,
                               update_embedding=True):

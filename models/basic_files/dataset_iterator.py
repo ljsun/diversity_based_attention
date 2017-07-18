@@ -104,9 +104,35 @@ class PadDataset:
             batch.append(np.zeros(max_length, dtype = int))
             count = 0
             
-        batch = self.pad_data(batch,max_length)
+        batch, sequence_length_batch = self.pad_data(batch,max_length)
 
         batch = np.transpose(batch)
+        return batch, count, sequence_length_batch
+
+    def make_batch_sequence(self, data, batch_size, count, max_length):
+        """ Make a matrix of size [batch_size * max_length]
+            for given dataset
+
+            Args:
+                data: Make batch from this dataset
+                batch_size : batch size
+                count : pointer from where retrieval will be done
+                max_length : maximum length to be padded into
+
+            Returns
+                batch: A matrix of size [batch_size * max_length]
+                count: The point from where the next retrieval is done.
+        """
+
+        batch = []
+        batch = data[count:count+batch_size]
+        count = count + batch_size
+
+
+        while (len(batch) < batch_size):
+            batch.append(np.zeros(max_length, dtype = int))
+            count = 0
+
         return batch, count
 
     def next_batch(self, dt, batch_size, c=True):
@@ -133,16 +159,14 @@ class PadDataset:
         max_length_title   = max(val.max_length_title   for i, val in self.datasets.iteritems())
         max_length_query   = max(val.max_length_query   for i, val in self.datasets.iteritems())
 
-        contents, count1 = self.make_batch(dt.content, batch_size, count, max_length_content)
-        titles,   _      = self.make_batch(dt.title,   batch_size, count,   max_length_title)
-        labels,   _      = self.make_batch(dt.labels,  batch_size, count,   max_length_title)
-        query,    _      = self.make_batch(dt.labels,  batch_size, count,   max_length_query)
-
-        content_sequence_length, _ = self.make_batch(dt.content_sequence_length, batch_size, count, 1)
-        query_sequence_length, _   = self.make_batch(dt.query_sequence_length,   batch_size, count, 1)
+        contents, count1, content_sequence_length = self.make_batch(dt.content, batch_size, count, max_length_content)
+        titles,   _ ,_     = self.make_batch(dt.title,   batch_size, count,   max_length_title)
+        labels,   _ ,_     = self.make_batch(dt.labels,  batch_size, count,   max_length_title)
+        query,    _ , query_sequence_length     = self.make_batch(dt.labels,  batch_size, count,   max_length_query)
 
         # Weights for the loss function for the decoder
         weights = copy.deepcopy(titles)
+
 
         # Fill the weighs matrix, based on the label parameters.
         for i in range(titles.shape[0]):
@@ -255,6 +279,8 @@ class PadDataset:
         * void
 
         """
+
+	#print (embedding_path, limit_encode, limit_decode)
         filenames_encode = [ working_dir + "train_content", working_dir + "train_query" ]
         filenames_decode = [ working_dir + "train_summary" ]
 

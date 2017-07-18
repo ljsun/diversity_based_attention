@@ -4,7 +4,7 @@ class Config:
     """ Config class represents the hyperparameters in a single
         object
     """ 
-    def __init__(self, filename="../config"):
+    def __init__(self, filename="config.txt"):
 
         """ Initialize the object with the parameters.
 
@@ -34,9 +34,9 @@ class Config:
             elif value.isdigit():
                 config_dir[key] = int(value)
             elif value == "True":
-                config_dir[key] = bool(value)
+                config_dir[key] = True
             elif value == "False":
-                config_dir[key] = bool(value)
+                config_dir[key] = False
             else:
                 config_dir[key] = value
 

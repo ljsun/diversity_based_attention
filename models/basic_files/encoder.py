@@ -33,7 +33,7 @@ def call_rnn_uni_static(cell_encoder,
                         embeddings,
                         dtype):
 
-  encoder_outputs, encoder_state = rnn.rnn(cell_encoder, embeddings, dtype)
+  encoder_outputs, encoder_state = rnn.rnn(cell_encoder, embeddings, dtype = dtype)
   return encoder_outputs, encoder_state
 
 def call_rnn_uni_dynamic(cell_encoder, 
@@ -41,9 +41,11 @@ def call_rnn_uni_dynamic(cell_encoder,
                          sequence_length,
                          dtype):
 
+  
+  #print (embeddings[0].get_shape())
   # pack for the time major = False
-  embeddings = array_ops.pack(1, embeddings)
-  encoder_outputs, encoder_state = rnn.dynamic_rnn(cell_encoder, embeddings, sequence_length, dtype)
+  embeddings = array_ops.pack(embeddings, axis=1)
+  encoder_outputs, encoder_state = rnn.dynamic_rnn(cell_encoder, embeddings, sequence_length, dtype = dtype)
 
   encoder_outputs = array_ops.unpack(encoder_outputs, axis=1)
 
@@ -56,10 +58,11 @@ def call_rnn_bidir_static(cell_encoder_fw,
 
   encoder_outputs, encoder_state_fw, encoder_state_bw =  rnn.bidirectional_rnn(
                                                          cell_encoder_fw, cell_encoder_bw,
-                                                         embeddings, dtype)
+                                                         embeddings, dtype = dtype)
   
   encoder_state = array_ops.concat(1, [encoder_state_fw, encoder_state_bw])
 
+  encoder_outputs = array_ops.unpack(2, encoder_outputs)
   return encoder_outputs, encoder_state
 
 
@@ -68,13 +71,15 @@ def call_rnn_bidir_dynamic(cell_encoder_fw,
                            embeddings, sequence_length,
                            dtype):
 
+  embeddings = array_ops.pack(embeddings, axis=1)
   encoder_outputs, encoder_state = rnn.bidirectional_dynamic_rnn(
                                                         cell_encoder_fw, cell_encoder_bw, 
-                                                        embeddings, sequence_length, dtype)
+                                                        embeddings, sequence_length, dtype = dtype)
 
   encoder_outputs = array_ops.concat(2, encoder_outputs)
-
   encoder_state = array_ops.concat(1, encoder_state)
+
+  encoder_outputs = array_ops.unpack(encoder_outputs, axis = 1)
   return encoder_outputs, encoder_state
 
 def call_rnn(config,
@@ -171,8 +176,8 @@ def encoder(config,
     query_embeddings = embedding_ops.embedding_lookup(embedding, query_inputs)
     query_embeddings = array_ops.unpack(query_embeddings)
 
-    print ("Embedded Inputs length:", len(embedded_inputs))
-    print("Shape in embedded inputs:", embedded_inputs[0].get_shape())
+    #print ("Embedded Inputs length:", len(embedded_inputs))
+    #print("Shape in embedded inputs:", embedded_inputs[0].get_shape())
 
     with variable_scope.variable_scope("Encoder_Cell"):
       encoder_outputs, encoder_state = call_rnn(config,

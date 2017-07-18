@@ -10,6 +10,7 @@ from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 from optparse import OptionParser
 from models.basic_files.dataset_iterator import *
+from models.inference_model import *
 from read_config import *
 import os
 
@@ -46,8 +47,8 @@ class run_model:
         self.label_placeholder         = tf.placeholder(tf.int32, shape=(self.config.config_dir["max_sequence_length_title"], None),   name = 'labels')
         self.weights_placeholder       = tf.placeholder(tf.int32, shape=(self.config.config_dir["max_sequence_length_title"], None),   name = 'weights')
         self.feed_previous_placeholder = tf.placeholder(tf.bool, name='feed_previous')
-        self.encode_sequence_length    = tf.placeholder(tf.int32, shape=None, name="encode_seq_length")
-        self.query_sequence_length     = tf.placeholder(tf.int32, shape=None, name="query_seq_length")
+        self.encode_sequence_length    = tf.placeholder(tf.int64, shape=None, name="encode_seq_length")
+        self.query_sequence_length     = tf.placeholder(tf.int64, shape=None, name="query_seq_length")
         #Could be used for dynamic padding
         #self.max_content_per_batch_p   = tf.placeholder(tf.int32, name='max_content')
         #self.max_title_per_batch_p     = tf.placeholder(tf.int32, name='max_title')
@@ -96,7 +97,7 @@ class run_model:
         """
 
         start_time = time.time()
-        steps_per_epoch = int(math.ceil(float(self.dataset.datasets["train"].number_of_examples) / float(self.config.batch_size)))
+        steps_per_epoch = int(math.ceil(float(self.dataset.datasets["train"].number_of_samples) / float(self.config.batch_size)))
 
         total_loss = 0
 
@@ -131,11 +132,8 @@ class run_model:
 
             duration = time.time() - start_time
 
-            print ("Loss value ", loss_value, " " , step)
-            sys.stdout.flush()
-
             # Check the loss with forward propogation
-            if (step + 1 == steps_per_epoch ) or ((step  + 1) % 5000 == 0):
+            if (step + 1 == steps_per_epoch ) or ((step  + 1) % self.config.config_dir["print_frequency"] == 0):
 
                 # Print status to stdout.
                 print('Step %d: loss = %.2f (%.3f sec)' % (step, loss_value, duration))
@@ -143,10 +141,9 @@ class run_model:
 
                 # Evaluate against the training set.
                 print('Training Data Eval:')
-                self.print_titles(sess, self.dataset.datasets["train"], 7)
+                self.print_titles(sess, self.dataset.datasets["train"], 2)
                     
                 # Evaluate against the validation set.
-                print('Step %d: loss = %.2f' % (step, loss_value))
                 print('Validation Data Eval:')
                 self.print_titles(sess,self.dataset.datasets["valid"], 2)
                     
@@ -169,7 +166,7 @@ class run_model:
         """  
 
         total_loss = 0
-        steps_per_epoch =  int(math.ceil(float(data_set.number_of_examples) / float(self.config.batch_size)))
+        steps_per_epoch =  int(math.ceil(float(data_set.number_of_samples) / float(self.config.batch_size)))
 
         for step in xrange(steps_per_epoch): 
             train_content, train_title, train_labels, train_query, train_weights, train_content_seq, train_query_seq, max_content, max_title, max_query = self.dataset.next_batch(
@@ -197,7 +194,7 @@ class run_model:
         total_loss = 0
         f1 = open(self.config.outdir + data_set.name + "_final_results", "wb")
 
-        steps_per_epoch =  int(math.ceil(float(data_set.number_of_examples) / float(self.config.batch_size)))
+        steps_per_epoch =  int(math.ceil(float(data_set.number_of_samples) / float(self.config.batch_size)))
 
         for step in xrange(steps_per_epoch):
             train_content, train_title, train_labels, train_query, train_weights, train_content_seq, train_query_seq,\
@@ -276,6 +273,8 @@ class run_model:
 
             # Build a Graph that computes predictions from the inference model.
             self.logits = self.model.inference(self.config,
+                                               self.config.config_dir["cell_encoder"],
+                                               self.config.config_dir["cell_decoder"],
                                                self.encode_input_placeholder,
                                                self.decode_input_placeholder, 
                                                self.query_input_placeholder,
@@ -338,11 +337,11 @@ class run_model:
                 print ("Epoch: " + str(epoch))
                 start = time.time()
 
-                print('Trainable Variables') 
+                #print('Trainable Variables') 
                 #for i in tf.trainable_variables():
-		        #	print (i.name)
-		        #	print (sess.run(tf.shape(i)))
-		        #	print (sess.run(i))
+		#        	print (i.name)
+		        	#print (sess.run(tf.shape(i)))
+		        	#print (sess.run(i))
                 
                 #Do a forward propogation for valid dataset
                 train_loss = self.run_epoch(epoch, sess)
@@ -373,35 +372,8 @@ class run_model:
             self.print_titles_in_files(sess, self.dataset.datasets["test"])
 
 def main():
-    parser = OptionParser()
- 
-    parser.add_option(
-    "-w", "--work-dir", dest="wd", default="../Data/")
-    parser.add_option(
-        "-l", "--learning-rate", dest="lr", default=0.0001)
-    parser.add_option(
-        "-e", "--embedding-size", dest="emb_size",
-        help="Size of word embeddings", default=50)
-    parser.add_option(
-        "-s", "--hidden-size", dest="hid_size",
-        help="Hidden size of the cell unit", default=100)
-    parser.add_option(
-        "-a", "--batch-size", dest="batch_size",
-        help="Number of examples in a batch", default=32)
-    parser.add_option(
-        "-n", "--epochs", dest="epochs",
-        help="Maximum Number of Epochs", default=10)
-
-    parser.add_option(
-        "-t", "--early_stop", dest="early_stop",
-        help="Stop after these many epochs if performance on validation is not improving", default=2)
-
-    parser.add_option(
-        "-o", "--output_dir", dest="outdir",
-        help="Output directory where the model will be stored", default="../out/")
-    (option, args) = parser.parse_args(sys.argv)
-    c = Config(float(option.lr), int(option.emb_size), int(option.hid_size), int(option.batch_size), int(option.epochs), early_stop=int(option.early_stop), outdir= option.outdir)
-    run_attention = run_model(option.wd, c)
+    c = Config("config.txt")
+    run_attention = run_model(c.config_dir["working_dir"], BasicAttention(), c)
     run_attention.run_training()
 
 if __name__ == '__main__':

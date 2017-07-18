@@ -34,7 +34,7 @@ def dynamic_distraction_decoder(config,
                       loop_function=None,
                       dtype=None,
                       scope=None,
-                      query_state = query_state,
+                      query_state = None,
                       initial_state_attention=False):
   """RNN decoder with attention for the sequence-to-sequence model.
 
@@ -114,7 +114,7 @@ def dynamic_distraction_decoder(config,
     project_initial_state_W = variable_scope.get_variable("Initial_State_W", [dim_1, dim_2])
     project_initial_state_B = variable_scope.get_variable("Initial_State_Bias", [dim_2])
 
-    print ("Preksha " + scope.name)
+    #print ("Preksha " + scope.name)
     if attn_length_state is None:
       attn_length_state = attention_states.get_shape()[1]
 
@@ -366,17 +366,22 @@ def dynamic_distraction_decoder_wrapper(config,
     proj_biases = ops.convert_to_tensor(output_projection[1], dtype=dtype)
     proj_biases.get_shape().assert_is_compatible_with([num_symbols])
 
- 
-  with variable_scope.variable_scope(
-    embedding_scope or "dynamic_distraction_decoder_wrapper", dtype=dtype,  reuse = True) as s1:
 
-    embedding = variable_scope.get_variable("embedding",
+  if embedding_scope == None:
+    with variable_scope.variable_scope("dynamic_distraction_decoder_wrapper", dtype=dtype, reuse=None) as s1:
+        embedding = variable_scope.get_variable("embedding", [num_symbols, embedding_size])
+
+  else:
+    with variable_scope.variable_scope(
+        embedding_scope or "dynamic_distraction_decoder_wrapper", dtype=dtype,  reuse = True) as s1:
+
+        embedding = variable_scope.get_variable("embedding",
                                             [num_symbols, embedding_size])
-    loop_function = utils._extract_argmax_and_embed(
-        embedding, output_projection,
-        update_embedding_for_previous) if feed_previous else None
-    emb_inp = [
-        embedding_ops.embedding_lookup(embedding, i) for i in decoder_inputs]
+  loop_function = utils._extract_argmax_and_embed(
+      embedding, output_projection,
+      update_embedding_for_previous) if feed_previous else None
+  emb_inp = [
+      embedding_ops.embedding_lookup(embedding, i) for i in decoder_inputs]
     
   with variable_scope.variable_scope(
     scope or "dynamic_distraction_decoder_wrapper", dtype =dtype) as scope:
@@ -513,7 +518,8 @@ def distraction_decoder_start(config,
         state_list = [state]
         if nest.is_sequence(state):
           state_list = nest.flatten(state)
-        
+
+        #print (len(outputs), outputs[0].get_shape())        
         return outputs + state_list
 
     outputs_and_state = control_flow_ops.cond(feed_previous,
@@ -526,3 +532,4 @@ def distraction_decoder_start(config,
       state = nest.pack_sequence_as(structure=encoder_state,
                                     flat_sequence=state_list)
     return outputs_and_state[:outputs_len], state
+
