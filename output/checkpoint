@@ -1,3 +1,0 @@
-model_checkpoint_path: "last_model"
-all_model_checkpoint_paths: "best_model"
-all_model_checkpoint_paths: "last_model"
