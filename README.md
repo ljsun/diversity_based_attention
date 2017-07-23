@@ -15,9 +15,9 @@ The implementation is based on [this](https://arxiv.org/abs/1704.08300) work.
 * [nltk](http://www.nltk.org/install.html)
 
 ## Data Download and Preprocessing
-* cd src/dataextraction_scripts
-* The model will extract the data for the categories mentioned in file debatepedia_categories
-* sh extract_data.sh
+    * cd src/dataextraction_scripts
+    * The model will extract the data for the categories mentioned in file debatepedia_categories
+    * sh extract_data.sh
 
 ## Get the Glove embeddings:
     wget http://nlp.stanford.edu/data/glove.840B.300d.zip
