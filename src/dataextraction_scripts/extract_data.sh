@@ -2,7 +2,7 @@
 
 # Give the links to the categories in the "categories" file, the debate links will be extracted 
 # These links will be stored in category_links/all_links
-python extract_links debatepedia_categories
+python extract_links.py debatepedia_categories
 #python extract_links.py c
 echo "Extracted links"
 
