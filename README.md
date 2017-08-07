@@ -18,6 +18,11 @@ The implementation is based on [this](https://arxiv.org/abs/1704.08300) work.
     * cd src/dataextraction_scripts
     * The model will extract the data for the categories mentioned in file debatepedia_categories
     * sh extract_data.sh
+    
+    ### To use the existing extracted dataset in dataset folder:
+    * cd src/dataextraction_scripts
+    * python make_folds.py ../../data <number_of_folds> <new_dir_for_10_folds> 
+    * By default run : python make_folds.py ../../data 10 ../../data
 
 ## Get the Glove embeddings:
     wget http://nlp.stanford.edu/data/glove.840B.300d.zip
