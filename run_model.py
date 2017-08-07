@@ -372,7 +372,7 @@ class run_model:
             self.print_titles_in_files(sess, self.dataset.datasets["test"])
 
 def main():
-    c = Config("config.txt")
+    c = Config(sys.argv[1])
     run_attention = run_model(c.config_dir["working_dir"], BasicAttention(), c)
     run_attention.run_training()
 
