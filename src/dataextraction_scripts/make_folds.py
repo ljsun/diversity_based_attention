@@ -132,8 +132,12 @@ def make_different_datasets(content, summary, query, number_of_folds, name):
 
 
 def main():
+        data_dir = sys.argv[1]
+        content_file = os.path.join(data_dir, "content.txt")
+        summary_file = os.path.join(data_dir, "summary.txt")
+        query_file   = os.path.join(data_dir, "query.txt")
+        make_different_datasets(content_file, summary_file, query_file, int(sys.argv[2]), sys.argv[3])
 
-	make_different_datasets(sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), sys.argv[5])
 
 if __name__ == '__main__':
 		main()	
