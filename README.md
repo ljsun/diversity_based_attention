@@ -25,11 +25,14 @@ The implementation is based on [this](https://arxiv.org/abs/1704.08300) work.
     * By default run : python make_folds.py ../../data 10 ../../data
 
 ## Get the Glove embeddings:
-    wget http://nlp.stanford.edu/data/glove.840B.300d.zip
     mkdir Embedding
-    mv glove.840B.300d.zip Embedding
+    cd Embedding
+    wget http://nlp.stanford.edu/data/glove.840B.300d.zip
     unzip glove.840B.300d.zip
- 
+    cat 2196017 300 > temp_metadata
+    cat temp_metadata glove.840.300d.txt > embeddings
+    rm temp_metadata
+    
  ## Configuration file:
      * The hyper parameters could be changed in the config.txt file.
      * The influence of eah hyperarameter have been explained in detail in the comments in config.txt
