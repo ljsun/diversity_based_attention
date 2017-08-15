@@ -29,8 +29,8 @@ The implementation is based on [this](https://arxiv.org/abs/1704.08300) work.
     cd Embedding
     wget http://nlp.stanford.edu/data/glove.840B.300d.zip
     unzip glove.840B.300d.zip
-    cat 2196017 300 > temp_metadata
-    cat temp_metadata glove.840.300d.txt > embeddings
+    echo 2196017 300 > temp_metadata
+    cat temp_metadata glove.840B.300d.txt > embeddings
     rm temp_metadata
     
  ## Configuration file:
