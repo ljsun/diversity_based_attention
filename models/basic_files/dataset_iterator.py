@@ -162,7 +162,7 @@ class PadDataset:
         contents, count1, content_sequence_length = self.make_batch(dt.content, batch_size, count, max_length_content)
         titles,   _ ,_     = self.make_batch(dt.title,   batch_size, count,   max_length_title)
         labels,   _ ,_     = self.make_batch(dt.labels,  batch_size, count,   max_length_title)
-        query,    _ , query_sequence_length     = self.make_batch(dt.labels,  batch_size, count,   max_length_query)
+        query,    _ , query_sequence_length     = self.make_batch(dt.query,  batch_size, count,   max_length_query)
 
         # Weights for the loss function for the decoder
         weights = copy.deepcopy(titles)
