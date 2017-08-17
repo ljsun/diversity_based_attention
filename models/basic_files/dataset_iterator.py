@@ -180,7 +180,9 @@ class PadDataset:
             dt.global_count_train = count1 % dt.number_of_samples
         else:
             dt.global_count_test  = count1 % dt.number_of_samples
-        
+    
+
+	#print (titles)
         return contents, titles, labels, query, weights, content_sequence_length, query_sequence_length, max_length_content, max_length_title, max_length_query
    
  
@@ -293,7 +295,8 @@ class PadDataset:
 
         self.vocab.construct_vocab(filenames_encode, filenames_decode, embedding_size, embedding_path,
                                    limit_encode, limit_decode)
-        self.load_data(working_dir)
+        #print (self.vocab.word_to_index_decode)
+	self.load_data(working_dir)
 
 
     def length_vocab_encode(self):

@@ -27,7 +27,7 @@ class Vocab():
         self.embeddings    = None
 
 
-    def get_global_embeddings(self, filenames, embedding_size, embedding_path):
+    def get_global_embeddings(self, filenames, embedding_size, embedding_dir):
         """ Construct the Embedding Matrix for the sentences in filenames.
 
             Args:
@@ -42,8 +42,19 @@ class Vocab():
                 Embedding matrix.
         """
         sentences = []
-        if (os.path.exists(embedding_path) == True):
-            model = KeyedVectors.load_word2vec_format(embedding_path, binary = True)
+
+        if (os.path.exists(embedding_dir + 'vocab_len.pkl')):
+                vocab_len_stored = pickle.load(open(embedding_dir + "vocab_len.pkl"))
+        else:
+                vocab_len_stored = 0
+
+        if (vocab_len_stored == self.len_vocab and os.path.exists(embedding_dir + "embeddings.pkl")):
+                print ("Load file")
+                self.embeddings = pickle.load(open(embedding_dir +  "embeddings.pkl"))
+                return None
+
+        if (os.path.exists(embedding_dir + 'embeddings') == True):
+            model = KeyedVectors.load_word2vec_format(embedding_dir + 'embeddings', binary = False)
             print ("Loading pretriained embeddings")
 
         else:
@@ -54,7 +65,7 @@ class Vocab():
                         sentences.extend(words)
 
             model = Word2Vec(sentences, size=embedding_size, min_count=0)
-            model.save(embedding_path)
+            model.save(embedding_dir + 'embeddings')
 
         self.embeddings_model = model
         return model
@@ -154,7 +165,7 @@ class Vocab():
                 new_index_decoder += 1
 
         self.word_to_index_encode = temp_word_to_index_encoder
-        self.word_to_index_decode = temp_index_to_word_decoder
+        self.word_to_index_decode = temp_word_to_index_decoder
 
 
 
@@ -217,6 +228,7 @@ class Vocab():
             Returns:
                 * index of the word        
         """
+
         if word not in self.word_to_index_decode:
             word = self.unknown
         return self.word_to_index_decode[word]
@@ -232,9 +244,9 @@ class Vocab():
             Returns:
                 * returns the corresponding word
         """
-        if index not in self.index_to_word_encode:
+        if index not in self.index_to_word_decode:
             return self.unknown
-        return self.index_to_word_encode[index]
+        return self.index_to_word_decode[index]
 
 
     def decode_word_decoder(self, index):
@@ -252,7 +264,7 @@ class Vocab():
         return self.index_to_word_decode[index]
 
 
-    def get_embeddings(self, embedding_size, index_to_word):
+    def get_embeddings(self, embedding_size, index_to_word, embedding_dir):
         """ This function creates an embedding matrix
             of size (vocab_size * embedding_size). The embedding 
 	    for each word is loaded from the embeddings learnt in the 
@@ -271,6 +283,17 @@ class Vocab():
 
         np.random.seed(1357)
 
+
+
+        if (os.path.exists(embedding_dir + 'vocab_len.pkl')):
+                vocab_len_stored = pickle.load(open(embedding_dir + "vocab_len.pkl"))
+        else:
+                vocab_len_stored = 0
+
+        if vocab_len_stored == self.len_vocab and os.path.exists(embedding_dir + "embeddings.pkl"):
+                self.embeddings = pickle.load(open(embedding_dir + "embeddings.pkl"))
+                return
+
         for index, word in sorted_list:
 
             if word in self.embeddings_model:
@@ -285,6 +308,10 @@ class Vocab():
 
         embeddings = np.asarray(embeddings)
         embeddings = embeddings.astype(np.float32)
+
+        pickle.dump(self.embeddings, open(embedding_dir + "embeddings.pkl", "w"))
+        pickle.dump(self.len_vocab, open(embedding_dir + "vocab_len.pkl", "w"))
+
 
         return embeddings
 
@@ -327,9 +354,10 @@ class Vocab():
         self.add_constant_tokens()
         self.create_reverse_dictionary()
 
-        self.embeddings_encoder = self.get_embeddings(embedding_size, self.index_to_word_encode)
-        self.embeddings_decoder = self.get_embeddings(embedding_size, self.index_to_word_decode)
+        self.embeddings_encoder = self.get_embeddings(embedding_size, self.index_to_word_encode, embedding_path)
+        self.embeddings_decoder = self.get_embeddings(embedding_size, self.index_to_word_decode, embedding_path)
 
+	#print(self.word_to_index_decode)
         self.len_vocab_encode = len(self.word_to_index_encode)
         self.len_vocab_decode = len(self.word_to_index_decode)
 
