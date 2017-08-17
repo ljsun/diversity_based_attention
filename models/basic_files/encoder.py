@@ -62,7 +62,7 @@ def call_rnn_bidir_static(cell_encoder_fw,
   
   encoder_state = array_ops.concat(1, [encoder_state_fw, encoder_state_bw])
 
-  encoder_outputs = array_ops.unpack(2, encoder_outputs)
+  #encoder_outputs = array_ops.unpack(2, encoder_outputs)
   return encoder_outputs, encoder_state
 
 
