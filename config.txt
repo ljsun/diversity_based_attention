@@ -19,7 +19,7 @@ is_distraction = True
 # Property: is_static:
 # Switch to turn off the attention module on query.
 
-is_query_static = True
+is_query_static = False
 
 # Property: is_dynamic:
 # Switch to use dynamic rnn
@@ -44,12 +44,12 @@ embedding_size = 300
 # Property : hidden_size:
 # RNN cell size
 
-hidden_size = 200
+hidden_size = 400
 
 # Property: batch_size:
 # Batch size for training
 
-batch_size = 32
+batch_size = 64
 
 # Property: num_epochs:
 # Number of maximum epochs
@@ -101,16 +101,16 @@ learning_rate = 0.0004
 # Property: max_sequence_length_content:
 # Maximum length of the source document allowed.
 
-max_sequence_length_content = 120
+max_sequence_length_content = 122
 
 # Property: max_sequence_length_title:
 # Maximum length of the summary to be predicted.
 
-max_sequence_length_title = 20
+max_sequence_length_title = 21
 
 # Property: max_sequence_length_query:
 # Maximum length of the query sentence allowed
 
-max_sequence_length_query = 20
+max_sequence_length_query = 22
 
 print_frequency = 100
