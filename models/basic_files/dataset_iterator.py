@@ -289,7 +289,7 @@ class PadDataset:
 
         if (diff_vocab == False):
             filenames_encode = filenames_encode + filenames_decode
-            filenames_decode = filenames_decode + filenames_decode
+            filenames_decode = filenames_encode
 
         self.vocab.construct_vocab(filenames_encode, filenames_decode, embedding_size, embedding_path,
                                    limit_encode, limit_decode)
