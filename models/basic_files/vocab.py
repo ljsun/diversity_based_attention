@@ -292,6 +292,7 @@ class Vocab():
 
         if vocab_len_stored == self.len_vocab and os.path.exists(embedding_dir + "embeddings.pkl"):
                 self.embeddings = pickle.load(open(embedding_dir + "embeddings.pkl"))
+		print (self.embeddings)
                 return
 
         for index, word in sorted_list:
@@ -309,7 +310,7 @@ class Vocab():
         embeddings = np.asarray(embeddings)
         embeddings = embeddings.astype(np.float32)
 
-        pickle.dump(self.embeddings, open(embedding_dir + "embeddings.pkl", "w"))
+        pickle.dump(embeddings, open(embedding_dir + "embeddings.pkl", "w"))
         pickle.dump(self.len_vocab, open(embedding_dir + "vocab_len.pkl", "w"))
 
 
