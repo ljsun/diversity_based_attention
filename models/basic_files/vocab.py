@@ -292,7 +292,7 @@ class Vocab():
 
         if vocab_len_stored == self.len_vocab and os.path.exists(embedding_dir + "embeddings.pkl"):
                 self.embeddings = pickle.load(open(embedding_dir + "embeddings.pkl"))
-		print (self.embeddings)
+		#print (self.embeddings)
                 return
 
         for index, word in sorted_list:
