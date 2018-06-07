@@ -25,6 +25,7 @@ The implementation is based on [this](https://arxiv.org/abs/1704.08300) work.
     * cd src/dataextraction_scripts
     * python make_folds.py ../../data <number_of_folds> <new_dir_for_10_folds> 
     * By default run : python make_folds.py ../../data 10 ../../data
+    10 fold cross validation
 
 ## Get the Glove embeddings:
     mkdir Embedding
