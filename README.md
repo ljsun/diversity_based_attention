@@ -18,6 +18,8 @@ The implementation is based on [this](https://arxiv.org/abs/1704.08300) work.
     * cd src/dataextraction_scripts
     * The model will extract the data for the categories mentioned in file debatepedia_categories
     * sh extract_data.sh
+    这是用于从debatepedia扒取所需数据的程序
+    在./data中已经有处理好的数据了，故无需再次运行
     
     ### To use the existing extracted dataset in dataset folder:
     * cd src/dataextraction_scripts
