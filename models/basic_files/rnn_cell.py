@@ -548,6 +548,12 @@ class DistractionLSTMCell_soft(RNNCell):
         c, h = state
       else:
         c, h = array_ops.split(1, 2, state)
+        
+      # 线性计算 concat = [inputs, h]W + b 
+      # 线性计算，分配W和b，W的shape为（2*num_units, 5*num_units）, b的shape为（5*num_units,）,共包含有五套参数，
+      # concat shape(batch_size, 5*num_units)
+      # 注意：只有cell 的input和output的size相等时才可以这样计算，否则要定义两套W,b.每套再包含五套参数
+      # 如此，便分别使用了一个（2*num_units, num_units)的矩阵计算的i,j,f,o,g
       concat = _linear([inputs, h], 5 * self._num_units, True)
 
       # i = input_gate, j = new_input, f = forget_gate, o = output_gate, g= distract_gate
