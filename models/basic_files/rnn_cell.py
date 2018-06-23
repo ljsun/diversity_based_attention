@@ -566,9 +566,13 @@ class DistractionLSTMCell_soft(RNNCell):
                self._activation(j))
 
 
+      # 算除法时都要记得在除数上加一个1e-13
+      # c = c_(t-1); new_c = c_t
+      # reduce_sum的效果和转置后做点积一样
       eps = 1e-13
       temp = math_ops.div(math_ops.reduce_sum(math_ops.mul(c, new_c),1),math_ops.reduce_sum(math_ops.mul(c,c),1) + eps)
 
+      # 加上g以后明明就是SD2而不是D2
       m = array_ops.transpose(sigmoid(g))
       t1 = math_ops.mul(m , temp)
       t1 = array_ops.transpose(t1) 
