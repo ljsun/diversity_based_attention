@@ -559,6 +559,9 @@ class DistractionLSTMCell_soft(RNNCell):
       # i = input_gate, j = new_input, f = forget_gate, o = output_gate, g= distract_gate
       i, j, f, o, g = array_ops.split(1, 5, concat)
 
+      # C_t = f_t*C_(t-1) + i_t*n_t
+      # f_t = sigmoid( W_f*[h_(t-1), x_t] + b_f ) = sigmoid(f + self._forget_bias)
+      # n_t = tanh(j)
       new_c = (c * sigmoid(f + self._forget_bias) + sigmoid(i) *
                self._activation(j))
 
