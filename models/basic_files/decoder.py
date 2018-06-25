@@ -459,6 +459,19 @@ def distraction_decoder_start(config,
           outputs.
         state: The state of each decoder cell at the final time-step.
           It is a 2D Tensor of shape [batch_size x cell.state_size].
+    
+    对比一下发现这个decoder没有loop_function，多出来了num_symbols，embedding_size，output_projection=None，feed_previous=False，update_embedding_for_previous=True。这些都是什么呢？
+
+    参数：
+    decoder_inputs：既然这个标榜了embedding，那么input肯定和rnn_decoder有些不同。这里input变为1维，[batch_size, ]也就是说，输入不需要自己做embedding了，直接输入tokens在vocab中对应的idx（即ids）即可，内部会自动帮我们进行id到embedding的转化。
+    num_symbols：就是vocab_size
+    embedding_size：每个token需要embedding成的维数，比如100
+    output_projection：(W, b)就是将输出做一个映射。为什么要映射，因为此时input相当于a list of [batch_size, 1]，内部帮我们做一个embedding，得到embedded_input=[batch_size, embedding_size ]，经过cell之后，得到[batch_size, output_size]（这个过程就是之前的rnn_decoder做的事情）。这样之后，如果我们设置了feed_previous=True，也就是需要将前一时刻的output作为下一时刻的input，那么前一时刻的output中要从vocab_size中选出一个分数最高的token来，即argmax(previous_output)
+    
+    但是，现在的output维度是output_size，并不能知道每个vocab的得分情况。因此要从output_size映射到vocab_size（这里的num_symbols）。
+    我们知道，x(某一时刻的output)的shape=[batch_size, output_size]，映射的公式是xw+b，那么w的shape=[output_zize, num_symbols]
+
+    update_embedding_for_previous：如果前一时刻的output不作为当前的input的话(feed_previous=False)，这个参数没影响（）；否则，该参数默认是True，但如果设置成false，则表示不对前一个embedding进行更新，那么bp的时候只会更新”GO”的embedding，其他token（decoder生成的）embedding不变。
     """
 
     encoder_state = initial_state
