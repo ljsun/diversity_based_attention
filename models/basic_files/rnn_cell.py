@@ -547,7 +547,7 @@ class DistractionLSTMCell_soft(RNNCell):
       if self._state_is_tuple:
         c, h = state
       else:
-        c, h = array_ops.split(1, 2, state)
+        c, h = array_ops.split(1, 2, state) # shape: [batch_size, num_units]
         
       # 线性计算 concat = [inputs, h]W + b 
       # 线性计算，分配W和b，W的shape为（2*num_units, 5*num_units）, b的shape为（5*num_units,）,共包含有五套参数，
@@ -571,13 +571,14 @@ class DistractionLSTMCell_soft(RNNCell):
       # reduce_sum的效果和转置后做点积一样
       eps = 1e-13
       temp = math_ops.div(math_ops.reduce_sum(math_ops.mul(c, new_c),1),math_ops.reduce_sum(math_ops.mul(c,c),1) + eps)
+      # temp is a scalar
 
       # 加上g以后明明就是SD2而不是D2
       m = array_ops.transpose(sigmoid(g))
       t1 = math_ops.mul(m , temp)
-      t1 = array_ops.transpose(t1) 
+      t1 = array_ops.transpose(t1)
  
-      distract_c = new_c  -  c * t1
+      distract_c = new_c  -  c * t1 # shape: [batch_size, num_units]
 
       new_h = self._activation(distract_c) * sigmoid(o)
 
